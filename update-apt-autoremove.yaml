@@ -1,3 +1,8 @@
-- name: Remove dependencies that are no longer required
-  apt:
-    autoremove: yes
+---
+- hosts: all
+
+  become: true
+  tasks:
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
