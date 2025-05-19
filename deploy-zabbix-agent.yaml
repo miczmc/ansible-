@@ -1,0 +1,9 @@
+---
+- hosts: all
+
+  become: true
+  tasks:
+    - name: deploy zabbix agent
+      zabbix.zabbix:
+        agent_param_server: "192.168.4.22"
+        agent_param_server: "192.168.4.22"
