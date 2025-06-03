@@ -49,15 +49,47 @@
         state: latest
         
     - name: Configurer l'agent Zabbix
-      community.zabbix.zabbix_agent:
-        agent_param_server: "{{ zabbix_server_ip }}"
-        agent_param_serveractive: "{{ zabbix_server_ip }}"
-        agent_param_hostname: "{{ zabbix_agent_hostname }}"
-        agent_param_hostmetadata: "{{ zabbix_agent_hostmetadata }}"
-        agent_param_enableremotecommands: 1
-        agent_param_logremotecommands: 1
-        agent_param_timeout: 30
-        agent_param_include: "/etc/zabbix/zabbix_agent2.d/*.conf"
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^Server='
+        line: 'Server={{ zabbix_server_ip }}'
+        backup: yes
+      notify: restart zabbix-agent2
+        
+    - name: Configurer ServerActive
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^ServerActive='
+        line: 'ServerActive={{ zabbix_server_ip }}'
+      notify: restart zabbix-agent2
+        
+    - name: Configurer Hostname
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^Hostname='
+        line: 'Hostname={{ zabbix_agent_hostname }}'
+      notify: restart zabbix-agent2
+        
+    - name: Configurer HostMetadata
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^HostMetadata='
+        line: 'HostMetadata={{ zabbix_agent_hostmetadata }}'
+      notify: restart zabbix-agent2
+        
+    - name: Activer les commandes à distance
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^EnableRemoteCommands='
+        line: 'EnableRemoteCommands=1'
+      notify: restart zabbix-agent2
+        
+    - name: Logger les commandes à distance
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: '^LogRemoteCommands='
+        line: 'LogRemoteCommands=1'
+      notify: restart zabbix-agent2
         
     - name: Créer le répertoire de configuration personnalisée
       file:
@@ -99,6 +131,13 @@
       ignore_errors: yes
       register: zabbix_connectivity
       
+            
     - name: Afficher le résultat de connectivité
       debug:
         msg: "Connectivité avec le serveur Zabbix {{ zabbix_server_ip }}:10051 - {{ 'OK' if zabbix_connectivity.failed == false else 'ÉCHEC' }}"
+
+  handlers:
+    - name: restart zabbix-agent2
+      systemd:
+        name: zabbix-agent2
+        state: restarted
