@@ -1,0 +1,50 @@
+# Configuration automatique générée par Ansible
+# {{ ansible_managed }}
+
+# Serveur Zabbix principal
+Server={{ zabbix_server_ip }}
+
+# Serveur Zabbix actif pour les checks actifs
+ServerActive={{ zabbix_server_ip }}
+
+# Nom d'hôte de cet agent
+Hostname={{ zabbix_agent_hostname }}
+
+# Métadonnées de l'hôte
+HostMetadata={{ zabbix_agent_hostmetadata }}
+
+# Autoriser les commandes à distance
+EnableRemoteCommands=1
+
+# Logger les commandes à distance
+LogRemoteCommands=1
+
+# Timeout des opérations
+Timeout=30
+
+# Répertoire des configurations supplémentaires
+Include=/etc/zabbix/zabbix_agent2.d/*.conf
+
+# Port d'écoute
+ListenPort=10050
+
+# Interface d'écoute (0.0.0.0 = toutes les interfaces)
+ListenIP=0.0.0.0
+
+# Fichier de log
+LogFile=/var/log/zabbix/zabbix_agent2.log
+
+# Taille max du fichier de log (MB)
+LogFileSize=1
+
+# Niveau de debug (0-4)
+DebugLevel=3
+
+# Fichier PID
+PidFile=/run/zabbix/zabbix_agent2.pid
+
+# Buffer pour les données envoyées
+BufferSend=5
+
+# Nombre d'items traités par seconde
+RefreshActiveChecks=120
