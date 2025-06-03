@@ -38,10 +38,38 @@
       package:
         update_cache: yes
         
+    - name: Arrêter l'ancien agent Zabbix s'il existe
+      systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - zabbix-agent
+        - zabbix-agentd
+      ignore_errors: yes
+      
+    - name: Supprimer les anciens packages Zabbix
+      package:
+        name:
+          - zabbix-agent
+          - zabbix-agentd
+        state: absent
+      ignore_errors: yes
+      
+    - name: Nettoyer les fichiers de configuration obsolètes
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/zabbix/zabbix_agentd.conf
+        - /etc/zabbix/zabbix_agentd.d
+      ignore_errors: yes
+        
     - name: Installer l'agent Zabbix (dernière version disponible)
       package:
         name: zabbix-agent2
         state: latest
+        force: yes
         
     - name: Configurer l'agent Zabbix
       lineinfile:
