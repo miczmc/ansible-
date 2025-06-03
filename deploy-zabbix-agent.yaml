@@ -4,7 +4,7 @@
   become: true
   
   vars:
-    zabbix_server_ip: "192.168.4.22"
+    zabbix_server_ip: "{{ zabbix_server | default('localhost') }}"
     zabbix_agent_hostname: "{{ ansible_hostname }}"
     zabbix_agent_hostmetadata: "Linux"
     
