@@ -100,18 +100,18 @@
         line: 'HostMetadata={{ zabbix_agent_hostmetadata }}'
       notify: restart zabbix-agent2
         
-    - name: Activer les commandes à distance
+    - name: Activer les commandes à distance (zabbix-agent2)
       lineinfile:
         path: /etc/zabbix/zabbix_agent2.conf
-        regexp: '^EnableRemoteCommands='
-        line: 'EnableRemoteCommands=1'
+        regexp: '^AllowKey='
+        line: 'AllowKey=system.run[*]'
       notify: restart zabbix-agent2
         
-    - name: Logger les commandes à distance
+    - name: Configurer les plugins (zabbix-agent2)
       lineinfile:
         path: /etc/zabbix/zabbix_agent2.conf
-        regexp: '^LogRemoteCommands='
-        line: 'LogRemoteCommands=1'
+        regexp: '^Plugins.SystemRun.LogRemoteCommands='
+        line: 'Plugins.SystemRun.LogRemoteCommands=1'
       notify: restart zabbix-agent2
         
     - name: Créer le répertoire de configuration personnalisée
