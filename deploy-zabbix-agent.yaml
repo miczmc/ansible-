@@ -71,6 +71,28 @@
         state: latest
         force: yes
         
+    - name: Vérifier et créer le fichier de configuration par défaut
+      shell: |
+        if [ ! -f /etc/zabbix/zabbix_agent2.conf ]; then
+          if [ -f /etc/zabbix/zabbix_agent2.conf.dpkg-dist ]; then
+            cp /etc/zabbix/zabbix_agent2.conf.dpkg-dist /etc/zabbix/zabbix_agent2.conf
+          else
+            # Créer un fichier de configuration minimal
+            cat > /etc/zabbix/zabbix_agent2.conf << 'EOF'
+# Configuration de base pour Zabbix Agent 2
+PidFile=/run/zabbix/zabbix_agent2.pid
+LogFile=/var/log/zabbix/zabbix_agent2.log
+LogFileSize=1
+Server=127.0.0.1
+ServerActive=127.0.0.1
+Hostname=Zabbix server
+Include=/etc/zabbix/zabbix_agent2.d/*.conf
+EOF
+          fi
+          chown root:zabbix /etc/zabbix/zabbix_agent2.conf
+          chmod 644 /etc/zabbix/zabbix_agent2.conf
+        fi
+      
     - name: Configurer l'agent Zabbix
       lineinfile:
         path: /etc/zabbix/zabbix_agent2.conf
@@ -98,6 +120,17 @@
         path: /etc/zabbix/zabbix_agent2.conf
         regexp: '^HostMetadata='
         line: 'HostMetadata={{ zabbix_agent_hostmetadata }}'
+      notify: restart zabbix-agent2
+        
+    - name: Supprimer les paramètres obsolètes de zabbix-agent v1
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: "{{ item }}"
+        state: absent
+      loop:
+        - '^EnableRemoteCommands='
+        - '^LogRemoteCommands='
+        - '^UnsafeUserParameters='
       notify: restart zabbix-agent2
         
     - name: Activer les commandes à distance (zabbix-agent2)
