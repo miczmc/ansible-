@@ -77,17 +77,16 @@
           if [ -f /etc/zabbix/zabbix_agent2.conf.dpkg-dist ]; then
             cp /etc/zabbix/zabbix_agent2.conf.dpkg-dist /etc/zabbix/zabbix_agent2.conf
           else
-            # Créer un fichier de configuration minimal
-            cat > /etc/zabbix/zabbix_agent2.conf << 'EOF'
-# Configuration de base pour Zabbix Agent 2
-PidFile=/run/zabbix/zabbix_agent2.pid
-LogFile=/var/log/zabbix/zabbix_agent2.log
-LogFileSize=1
-Server=127.0.0.1
-ServerActive=127.0.0.1
-Hostname=Zabbix server
-Include=/etc/zabbix/zabbix_agent2.d/*.conf
-EOF
+            cat > /etc/zabbix/zabbix_agent2.conf << 'EOFCONFIG'
+        # Configuration de base pour Zabbix Agent 2
+        PidFile=/run/zabbix/zabbix_agent2.pid
+        LogFile=/var/log/zabbix/zabbix_agent2.log
+        LogFileSize=1
+        Server=127.0.0.1
+        ServerActive=127.0.0.1
+        Hostname=Zabbix server
+        Include=/etc/zabbix/zabbix_agent2.d/*.conf
+        EOFCONFIG
           fi
           chown root:zabbix /etc/zabbix/zabbix_agent2.conf
           chmod 644 /etc/zabbix/zabbix_agent2.conf
