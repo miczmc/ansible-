@@ -1,9 +1,104 @@
 ---
-- hosts: all
-
+- name: Déploiement et configuration de l'agent Zabbix
+  hosts: all
   become: true
+  
+  vars:
+    zabbix_server_ip: "192.168.4.22"
+    zabbix_agent_hostname: "{{ ansible_hostname }}"
+    zabbix_agent_hostmetadata: "Linux"
+    
   tasks:
-    - name: deploy zabbix agent
+    - name: Installer les dépendances système
+      package:
+        name:
+          - wget
+          - curl
+        state: present
+        
+    - name: Ajouter le repository Zabbix (Debian/Ubuntu)
+      apt_repository:
+        repo: "deb https://repo.zabbix.com/zabbix-official/7.0/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} main"
+        state: present
+        filename: zabbix-official
+      when: ansible_os_family == "Debian"
+      
+    - name: Ajouter la clé GPG Zabbix (Debian/Ubuntu)
+      apt_key:
+        url: https://repo.zabbix.com/zabbix-official/7.0/{{ ansible_distribution | lower }}/pool/main/z/zabbix-release/zabbix-release_7.0-1+{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}_all.deb
+        state: present
+      when: ansible_os_family == "Debian"
+      
+    - name: Ajouter le repository Zabbix (RedHat/CentOS)
+      yum_repository:
+        name: zabbix-official
+        description: Zabbix Official Repository
+        baseurl: "https://repo.zabbix.com/zabbix-official/7.0/rhel/{{ ansible_distribution_major_version }}/$basearch/"
+        gpgkey: https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX-08EFA7DD
+        gpgcheck: yes
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+      
+    - name: Mettre à jour le cache des packages
+      package:
+        update_cache: yes
+        
+    - name: Installer l'agent Zabbix (dernière version disponible)
+      package:
+        name: zabbix-agent2
+        state: latest
+        
+    - name: Configurer l'agent Zabbix
       community.zabbix.zabbix_agent:
-        agent_param_server: "192.168.4.22"
-        agent_param_serveractive: "192.168.4.22"
+        agent_param_server: "{{ zabbix_server_ip }}"
+        agent_param_serveractive: "{{ zabbix_server_ip }}"
+        agent_param_hostname: "{{ zabbix_agent_hostname }}"
+        agent_param_hostmetadata: "{{ zabbix_agent_hostmetadata }}"
+        agent_param_enableremotecommands: 1
+        agent_param_logremotecommands: 1
+        agent_param_timeout: 30
+        agent_param_include: "/etc/zabbix/zabbix_agent2.d/*.conf"
+        
+    - name: Créer le répertoire de configuration personnalisée
+      file:
+        path: /etc/zabbix/zabbix_agent2.d
+        state: directory
+        owner: zabbix
+        group: zabbix
+        mode: '0755'
+        
+    - name: Vérifier la configuration de l'agent
+      command: zabbix_agent2 -t {{ item }}
+      loop:
+        - "system.uname"
+        - "agent.ping"
+      register: zabbix_test_result
+      failed_when: zabbix_test_result.rc != 0
+      
+    - name: Démarrer et activer le service Zabbix Agent
+      systemd:
+        name: zabbix-agent2
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        
+    - name: Vérifier le statut du service
+      systemd:
+        name: zabbix-agent2
+      register: zabbix_service_status
+      
+    - name: Afficher le statut du service
+      debug:
+        msg: "Service Zabbix Agent: {{ zabbix_service_status.status.ActiveState }}"
+        
+    - name: Vérifier la connectivité avec le serveur Zabbix
+      wait_for:
+        host: "{{ zabbix_server_ip }}"
+        port: 10051
+        timeout: 10
+      ignore_errors: yes
+      register: zabbix_connectivity
+      
+    - name: Afficher le résultat de connectivité
+      debug:
+        msg: "Connectivité avec le serveur Zabbix {{ zabbix_server_ip }}:10051 - {{ 'OK' if zabbix_connectivity.failed == false else 'ÉCHEC' }}"
